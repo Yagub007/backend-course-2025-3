@@ -2,12 +2,11 @@ const fs = require('fs');
 const { Command } = require('commander');
 const program = new Command();
 
+
 program.configureOutput({
   writeErr: (str) => {
     str = str.trim();
-    if (str.includes("required option '-i, --input <path>'")) {
-      console.error('Please, specify input file');
-    } else if (str.includes("option '-i, --input <path>' argument missing")) {
+    if (str.includes("option '-i, --input ")) {
       console.error('Please, specify input file');
     } else if (str.includes("option '-o, --output <path>' argument missing")) {
       console.error('Please, specify output file path');
@@ -16,7 +15,7 @@ program.configureOutput({
     } else {
       console.error(str);
     }
-  }
+  },
 });
 
 program
@@ -40,7 +39,6 @@ if (!fs.existsSync(opts.input)) {
 
 const raw = fs.readFileSync(opts.input, 'utf8').trim();
 let data;
-
 try {
   data = JSON.parse(raw);
 } catch (err) {
@@ -68,6 +66,7 @@ let outputText = result
 if (opts.output) {
   fs.writeFileSync(opts.output, outputText, 'utf8');
 }
+
 if (opts.display) {
   console.log(outputText);
 }
