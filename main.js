@@ -2,7 +2,6 @@ const fs = require('fs');
 const { Command } = require('commander');
 const program = new Command();
 
-
 program.configureOutput({
   writeErr: (str) => {
     str = str.trim();
@@ -38,12 +37,21 @@ if (!fs.existsSync(opts.input)) {
 }
 
 const raw = fs.readFileSync(opts.input, 'utf8').trim();
+
 let data;
 try {
   data = JSON.parse(raw);
-} catch (err) {
-  console.error('Invalid JSON format in input file');
-  process.exit(1);
+  if (!Array.isArray(data)) data = [data];
+} catch {
+  try {
+    data = raw
+      .split('\n')
+      .filter(line => line.trim()) 
+      .map(line => JSON.parse(line));
+  } catch {
+    console.error('Invalid JSON format in input file');
+    process.exit(1);
+  }
 }
 
 let result = data;
