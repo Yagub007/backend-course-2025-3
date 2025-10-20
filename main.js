@@ -3,23 +3,13 @@ const { Command } = require('commander');
 const program = new Command();
 
 program.configureOutput({
-  writeErr: (str) => {
-    str = str.trim();
-    if (str.includes("option '-i, --input ")) {
-      console.error('Please, specify input file');
-    } else if (str.includes("option '-o, --output <path>' argument missing")) {
-      console.error('Please, specify output file path');
-    } else if (str.includes("option '-a, --airtime <number>' argument missing")) {
-      console.error('Please, specify airtime value');
-    } else {
-      console.error(str);
-    }
-  },
+  writeOut: () => {},
+  writeErr: () => {}
 });
 
 program
-  .requiredOption('-i, --input <path>', 'input JSON file (required)')
-  .option('-o, --output <path>', 'output file')
+  .option('-i, --input <file>', 'input file')
+  .option('-o, --output <file>', 'output file')
   .option('-d, --display', 'display output to console')
   .option(
     '-a, --airtime <number>',
@@ -28,8 +18,29 @@ program
   )
   .option('-t, --date', 'show FL_DATE before AIR_TIME and DISTANCE');
 
-program.parse(process.argv);
+program.exitOverride();
+
+try {
+  program.parse(process.argv);
+} catch (err) {
+}
+
 const opts = program.opts();
+
+if (!opts.input) {
+  console.error('Please, specify input file');
+  process.exit(1);
+}
+
+if (process.argv.includes('-o') && !opts.output) {
+  console.error('Please, specify output file path');
+  process.exit(1);
+}
+
+if (process.argv.includes('-a') && (opts.airtime === undefined || Number.isNaN(opts.airtime))) {
+  console.error('Please, specify airtime value');
+  process.exit(1);
+}
 
 if (!fs.existsSync(opts.input)) {
   console.error('Cannot find input file');
@@ -56,11 +67,7 @@ try {
 
 let result = data;
 
-if (opts.airtime) {
-  if (Number.isNaN(opts.airtime)) {
-    console.error('Airtime must be a number');
-    process.exit(1);
-  }
+if (opts.airtime && !Number.isNaN(opts.airtime)) {
   result = result.filter(item => item.AIR_TIME && item.AIR_TIME > opts.airtime);
 }
 
